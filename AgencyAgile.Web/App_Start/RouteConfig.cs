@@ -14,21 +14,21 @@ namespace AgencyAgile.Web
         {
             routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
-            routes.MapTenantRoute("Tenant Job Doc", "{client}/{job}/{document}"
-                , new { controller = "Agency", action = "Document" }
-                , new { document = new JobDocumentRouteConstraint() });
+            //routes.MapTenantRoute("Tenant Job Doc", "{client}/{job}/{document}"
+            //    , new { controller = "Agency", action = "Document" }
+            //    , new { document = new JobDocumentRouteConstraint() });
 
-            routes.MapTenantRoute("Tenant Job", "{client}/{job}"
-                , new { controller = "Agency", action = "Job" }
-                , new { job = new JobRouteConstraint() });
+            //routes.MapTenantRoute("Tenant Job", "{client}/{job}"
+            //    , new { controller = "Agency", action = "Job" }
+            //    , new { job = new JobRouteConstraint() });
 
-            routes.MapTenantRoute("Tenant Client", "{client}"
-                , new { controller = "Agency", action = "Client" }
-                , new { client = new ClientRouteConstraint() });
+            //routes.MapTenantRoute("Tenant Client", "{client}"
+            //    , new { controller = "Agency", action = "Client" }
+            //    , new { client = new ClientRouteConstraint() });
 
-            routes.MapTenantRoute("Tenant Home", "{action}"
-                , new { controller = "Agency", action = "Home" }
-                , new { tenant = new TenantRouteConstraint() });
+            //routes.MapTenantRoute("Tenant Home", "{action}"
+            //    , new { controller = "Agency", action = "Home" }
+            //    , new { tenant = new TenantRouteConstraint() });
 
             routes.MapRoute(
                 name: "Default",

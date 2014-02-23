@@ -21,23 +21,32 @@ namespace AgencyAgile.DAL
         {
             var idCtx = IdentityDbContext.Create(context.SchemaName);
             var system = idCtx.Users.First(u => u.UserName == "System");
-            var am = idCtx.Users.First(u => u.UserName == "Demo_Account_Manager");
-            var td = idCtx.Users.First(u => u.UserName == "Demo_Technical_Director");
-            var ta = idCtx.Users.First(u => u.UserName == "Demo_Technical_Architect");
-            var tl = idCtx.Users.First(u => u.UserName == "Demo_Technical_Lead");
-            var deva = idCtx.Users.First(u => u.UserName == "Demo_DeveloperA");
-            var devb = idCtx.Users.First(u => u.UserName == "Demo_DeveloperB");
-            var devc = idCtx.Users.First(u => u.UserName == "Demo_DeveloperC");
-            var des = idCtx.Users.First(u => u.UserName == "Demo_Designer");
-            var ux = idCtx.Users.First(u => u.UserName == "Demo_UX");
-            var pm = idCtx.Users.First(u => u.UserName == "Demo_Project_Manager");
+            var am = idCtx.Users.First(u => u.UserName == "DemoAccountManager");
+            var td = idCtx.Users.First(u => u.UserName == "DemoTechnicalDirector");
+            var ta = idCtx.Users.First(u => u.UserName == "DemoTechnicalArchitect");
+            var tl = idCtx.Users.First(u => u.UserName == "DemoTechnicalLead");
+            var deva = idCtx.Users.First(u => u.UserName == "DemoDeveloperA");
+            var devb = idCtx.Users.First(u => u.UserName == "DemoDeveloperB");
+            var devc = idCtx.Users.First(u => u.UserName == "DemoDeveloperC");
+            var des = idCtx.Users.First(u => u.UserName == "DemoDesigner");
+            var ux = idCtx.Users.First(u => u.UserName == "DemoUX");
+            var pm = idCtx.Users.First(u => u.UserName == "DemoProjectManager");
             _users = idCtx.Users.Where(u => u.UserName != system.UserName).ToDictionary(u => u.UserName, StringComparer.OrdinalIgnoreCase);
 
 
             var briefType = new DocumentType { Name = "Brief", Slug = "brief", SortOrder = 0, LimitPerJob = 1, Description = "An internally interpreted version of initial client provided requirements", Created = AuditedAction.Create(system) };
+            briefType.LastUpdated = briefType.Created.Clone();
+            context.DocumentTypes.Add(briefType);
             var pitchType = new DocumentType { Name = "Pitch", Slug = "pitch", SortOrder = 1, LimitPerJob = 1, HasFeatures = true, Description = "The initial rough vision of a solution that meets the brief", Created = AuditedAction.Create(system) };
+            pitchType.LastUpdated = pitchType.Created.Clone();
+            context.DocumentTypes.Add(pitchType);
             var approachType = new DocumentType { Name = "Technical Approach", Slug = "approach", LimitPerJob = 1, HasFeatures = true, HasTasks = true, SortOrder = 2, Description = "The technical counterpart to the pitch, this defines the roughly validated delivery approach that corresponds with any estimates", Created = AuditedAction.Create(system) };
+            approachType.LastUpdated = approachType.Created.Clone();
+            context.DocumentTypes.Add(approachType);
+
             var visionType = new DocumentType { Name = "Vision", HasFeatures = true, Slug = "vision", SortOrder = 3, LimitPerJob = 1, Description = "The vision of a solution that meets the brief and sets the boundaries on the scope of work", Created = AuditedAction.Create(system) };
+            visionType.LastUpdated = visionType.Created.Clone();
+            context.DocumentTypes.Add(visionType);
             context.SaveChanges();
             for (int i = 1; i <= 3; i++)
             {
@@ -61,6 +70,7 @@ namespace AgencyAgile.DAL
                         ,
                         Created = AuditedAction.Create(am)
                     };
+                    job.LastUpdated = job.Created.Clone();
                     context.Jobs.Add(job);
                     GenerateDocument(context, client, job, briefType, _rnd.Next(3, 8), _rnd.Next(2, 6));
                     if (_rnd.Next(10) > 4)
@@ -74,7 +84,7 @@ namespace AgencyAgile.DAL
                     }
 
                 }
-                
+
             }
             context.SaveChanges();
 
@@ -85,7 +95,7 @@ namespace AgencyAgile.DAL
         {
             var document = new Document
             {
-                Slug= dt.Slug 
+                Slug = dt.Slug
                 ,
                 Title = Headings[_rnd.Next(Headings.Length - 1)].Trim(' ', '.')
                 ,
@@ -93,10 +103,19 @@ namespace AgencyAgile.DAL
                 ,
                 Job = job
                 ,
+                Features = new List<Feature>()
+                ,
+                Questions = new List<Question>()
+                ,
+                Sections = new List<CopyBlock>()
+                ,
                 Created = GenerateRandomAuditedAction()
                 ,
                 DocumentType = dt
             };
+            document.LastUpdated = document.Created.Clone();
+            context.Documents.Add(document);
+            context.SaveChanges();
             for (int sc = 0; sc < sectionCount; sc++)
             {
                 var cb = GenerateStructuredCopyBlockWithHistory(context, true);
@@ -109,6 +128,8 @@ namespace AgencyAgile.DAL
                 document.Questions.Add(cb);
                 document.LastUpdated = cb.LastUpdated.Clone();
             }
+
+            context.SaveChanges();
         }
 
         private Question GenerateQuestion(AgencyDbContext context)
@@ -166,6 +187,7 @@ namespace AgencyAgile.DAL
         private CopyBlock GenerateCopyBlockWithHistory(AgencyDbContext context)
         {
             var cb = new CopyBlock { History = new List<Fragment>(), SubSections = new List<CopyBlock>() };
+
             for (int k = 0; k < _rnd.Next(5) + 1; k++)
             {
                 var f = new Fragment
@@ -176,7 +198,6 @@ namespace AgencyAgile.DAL
                     ,
                     Markup = MarkDown.Transform(Paragraphs[_rnd.Next(Paragraphs.Length - 1)])
                 };
-
 
                 context.Fragments.Add(f);
                 context.SaveChanges();

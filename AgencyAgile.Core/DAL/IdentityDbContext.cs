@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
+using System.Data.Entity.Migrations;
+using System.Data.Entity.Migrations.History;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +19,18 @@ namespace AgencyAgile.DAL
 
         public static IdentityDbContext Create(string tenantSchema)
         {
-            return new IdentityDbContext(tenantSchema, DefaultConnection);
+            var connectionString = DefaultConnection;
+            var tenantDataMigrationsConfiguration = new DbMigrationsConfiguration<IdentityDbContext>();
+            tenantDataMigrationsConfiguration.AutomaticMigrationsEnabled = false;
+            tenantDataMigrationsConfiguration.SetSqlGenerator("System.Data.SqlClient", new SqlServerSchemaAwareMigrationSqlGenerator(tenantSchema));
+            tenantDataMigrationsConfiguration.SetHistoryContextFactory("System.Data.SqlClient", (existingConnection, defaultSchema) => new HistoryContext(existingConnection, tenantSchema));
+            tenantDataMigrationsConfiguration.TargetDatabase = new System.Data.Entity.Infrastructure.DbConnectionInfo(connectionString, "System.Data.SqlClient");
+            tenantDataMigrationsConfiguration.MigrationsAssembly = typeof(IdentityDbContext).Assembly;
+            tenantDataMigrationsConfiguration.MigrationsNamespace = "AgencyAgile.Migrations.Identity";
+
+            DbMigrator tenantDataCtxMigrator = new DbMigrator(tenantDataMigrationsConfiguration);
+            tenantDataCtxMigrator.Update();
+            return new IdentityDbContext(tenantSchema, connectionString);
         }
 
         // Used by EF migrations

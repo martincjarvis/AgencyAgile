@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
+using System.Data.Entity.Migrations;
+using System.Data.Entity.Migrations.History;
 using System.Data.Entity.ModelConfiguration.Conventions;
 using System.Linq;
 using System.Text;
@@ -18,7 +20,18 @@ namespace AgencyAgile.DAL
 
         public static AgencyDbContext Create(string tenantSchema)
         {
-            return new AgencyDbContext(tenantSchema, DefaultConnection);
+            var connectionString = DefaultConnection;
+            var tenantDataMigrationsConfiguration = new DbMigrationsConfiguration<AgencyDbContext>();
+            tenantDataMigrationsConfiguration.AutomaticMigrationsEnabled = false;
+            tenantDataMigrationsConfiguration.SetSqlGenerator("System.Data.SqlClient", new SqlServerSchemaAwareMigrationSqlGenerator(tenantSchema));
+            tenantDataMigrationsConfiguration.SetHistoryContextFactory("System.Data.SqlClient", (existingConnection, defaultSchema) => new HistoryContext(existingConnection, tenantSchema));
+            tenantDataMigrationsConfiguration.TargetDatabase = new System.Data.Entity.Infrastructure.DbConnectionInfo(connectionString, "System.Data.SqlClient");
+            tenantDataMigrationsConfiguration.MigrationsAssembly = typeof(AgencyDbContext).Assembly;
+            tenantDataMigrationsConfiguration.MigrationsNamespace = "AgencyAgile.Migrations.Agency";
+
+            DbMigrator tenantDataCtxMigrator = new DbMigrator(tenantDataMigrationsConfiguration);
+            tenantDataCtxMigrator.Update();
+            return new AgencyDbContext(tenantSchema, connectionString);
         }
 
         // Used by EF migrations

@@ -11,6 +11,8 @@ using AgencyAgile.Models;
 using AgencyAgile.DAL;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
+using System.Data.Entity.Migrations;
+using System.Data.Entity.Migrations.History;
 
 namespace AgencyAgile.Web.Controllers
 {
@@ -57,10 +59,16 @@ namespace AgencyAgile.Web.Controllers
                 tenant.TenantId = Guid.NewGuid();
                 tenant.Created = AuditedAction.Create("system", "System");
                 db.Tenants.Add(tenant);
-                var uctx = AgencyAgile.DAL.IdentityDbContext.Create(tenant.Slug);
-                var i = uctx.Users.Count();
-                var actx = AgencyDbContext.Create(tenant.Slug);
-                var c = actx.Clients.Count();
+
+                var schemaName = tenant.Slug;
+                
+
+                using (var uctx = AgencyAgile.DAL.IdentityDbContext.Create(schemaName))
+                using (var actx = AgencyDbContext.Create(schemaName))
+                {
+                    var i = uctx.Users.Count();
+                    var c = actx.Clients.Count();
+                }
                 await db.SaveChangesAsync();
                 return RedirectToAction("Index");
             }
